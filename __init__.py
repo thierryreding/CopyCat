@@ -36,7 +36,7 @@ ENUM_ListOperation = [
 class COPYCAT_ListOperator(bpy.types.Operator):
     bl_idname = 'copycat.list'
     bl_label = 'List Operator'
-    bl_options = { 'UNDO', 'REGISTER' }
+    bl_options = { 'UNDO' }
 
     operation: bpy.props.EnumProperty(items = ENUM_ListOperation)
 
