@@ -1,7 +1,7 @@
 bl_info = {
     'name': 'CopyCat',
     'author': 'Thierry Reding <thierry.reding@gmail.com>',
-    'version': (1, 0, 0),
+    'version': (1, 0, 1),
     'blender': (3, 4, 0),
     'description': '',
     'doc_url': 'https://',
