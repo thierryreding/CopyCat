@@ -78,6 +78,7 @@ class COPYCAT_ApplyOperator(bpy.types.Operator):
     '''Tooltip'''
     bl_idname = 'copycat.apply'
     bl_label = 'Apply Constraint Transforms'
+    bl_options = { 'UNDO' }
 
     @classmethod
     def poll(cls, context):
