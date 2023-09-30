@@ -8,7 +8,7 @@ bl_info = {
     'category': 'Animation',
 }
 
-import bpy
+import bpy, bpy_extras
 
 class COPYCAT_BoneMapping(bpy.types.PropertyGroup):
     source: bpy.props.StringProperty(name = 'source', default = '', description = 'source bone')
@@ -105,6 +105,18 @@ class COPYCAT_ApplyOperator(bpy.types.Operator):
 
         return { 'FINISHED' }
 
+class COPYCAT_ExportOperator(bpy.types.Operator, bpy_extras.io_utils.ExportHelper):
+    bl_idname = 'copycat.export'
+    bl_label = 'Export FBX'
+
+    filter_glob: bpy.props.StringProperty(default = '*.fbx', options = { 'HIDDEN' })
+    filename_ext = '.fbx'
+
+    def execute(self, context):
+        bpy.ops.export_scene.fbx(filepath = self.filepath, use_selection = True, add_leaf_bones = False)
+
+        return { 'FINISHED' }
+
 class COPYCAT_Panel(bpy.types.Panel):
     bl_label = 'CopyCat'
     bl_idname = 'copycat_panel'
@@ -114,7 +126,7 @@ class COPYCAT_Panel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.object is not None and context.object.type == 'ARMATURE'
+        return context.selected_objects and context.active_object and context.active_object.type == 'ARMATURE'
 
     def draw(self, context):
         action = context.object.animation_data.action
@@ -141,11 +153,14 @@ class COPYCAT_Panel(bpy.types.Panel):
         if action.copycatMappings:
             self.layout.operator(operator = 'copycat.apply', text = 'Apply Bone Constraints', icon = 'CONSTRAINT')
 
+        self.layout.operator(operator = 'copycat.export', icon = 'EXPORT')
+
 classes = [
     COPYCAT_BoneMapping,
     COPYCAT_BonesList,
     COPYCAT_ListOperator,
     COPYCAT_ApplyOperator,
+    COPYCAT_ExportOperator,
     COPYCAT_Panel,
 ]
 
