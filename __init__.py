@@ -8,6 +8,7 @@ bl_info = {
     'category': 'Animation',
 }
 
+import os.path
 import bpy, bpy_extras
 
 class COPYCAT_BoneMapping(bpy.types.PropertyGroup):
@@ -18,6 +19,43 @@ class COPYCAT_BonesList(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
         layout.prop_search(item, 'source', context.object.pose, 'bones', text = '', icon = 'BONE_DATA')
         layout.prop_search(item, 'target', context.object.pose, 'bones', text = '', icon = 'BONE_DATA')
+
+class COPYCAT_ImportOperator(bpy.types.Operator, bpy_extras.io_utils.ImportHelper):
+    bl_idname = 'copycat.import'
+    bl_label = 'Import FBX'
+
+    files: bpy.props.CollectionProperty(type = bpy.types.OperatorFileListElement)
+    directory: bpy.props.StringProperty(subtype = 'FILE_PATH')
+    filename: bpy.props.StringProperty(subtype = 'FILE_PATH')
+
+    filter_glob: bpy.props.StringProperty(default = '*.fbx', options = { 'HIDDEN' })
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return { 'RUNNING_MODAL' }
+
+    def execute(self, context):
+        armature = None
+
+        for file in self.files:
+            filepath = os.path.join(self.directory, file.name)
+            filename, ext = os.path.splitext(file.name)
+
+            bpy.ops.import_scene.fbx(filepath = filepath)
+
+            # name action after filename
+            action = context.object.animation_data.action
+            action.name = filename
+
+            # for multi-file imports, keep only the first armature object
+            if not armature:
+                armature = context.object
+            else:
+                bpy.ops.object.delete()
+
+        context.view_layer.objects.active = armature
+        armature.select_set(True)
+        return { 'FINISHED' }
 
 MAP_bones = (
     ('ik_foot_l', 'foot_l'),
@@ -126,38 +164,42 @@ class COPYCAT_Panel(bpy.types.Panel):
 
     @classmethod
     def poll(cls, context):
-        return context.selected_objects and context.active_object and context.active_object.type == 'ARMATURE'
+        return True
 
     def draw(self, context):
-        action = context.object.animation_data.action
+        self.layout.operator('copycat.import', text = 'Import FBX', icon = 'IMPORT')
 
-        row = self.layout.row(align = True)
-        row.alignment = 'LEFT'
+        if context.object and context.object.type == 'ARMATURE':
+            action = context.object.animation_data.action
 
-        col = row.column(align = True)
-        col.template_list('COPYCAT_BonesList', '', action, 'copycatMappings', action, 'copycatIndex')
+            row = self.layout.row(align = True)
+            row.alignment = 'LEFT'
 
-        col = row.column(align = True)
-        op = col.operator(operator = 'copycat.list', text = '', icon = 'ADD')
-        op.operation = 'ADD'
-        op = col.operator(operator = 'copycat.list', text = '', icon = 'REMOVE')
-        op.operation = 'REMOVE'
-        op = col.operator(operator = 'copycat.list', text = '', icon = 'TRASH')
-        op.operation = 'CLEAR'
+            col = row.column(align = True)
+            col.template_list('COPYCAT_BonesList', '', action, 'copycatMappings', action, 'copycatIndex')
 
-        col.separator()
+            col = row.column(align = True)
+            op = col.operator(operator = 'copycat.list', text = '', icon = 'ADD')
+            op.operation = 'ADD'
+            op = col.operator(operator = 'copycat.list', text = '', icon = 'REMOVE')
+            op.operation = 'REMOVE'
+            op = col.operator(operator = 'copycat.list', text = '', icon = 'TRASH')
+            op.operation = 'CLEAR'
 
-        op = col.operator(operator = 'copycat.list', text = '', icon = 'GROUP_BONE')
-        op.operation = 'DEFAULT'
+            col.separator()
 
-        if action.copycatMappings:
-            self.layout.operator(operator = 'copycat.apply', text = 'Apply Bone Constraints', icon = 'CONSTRAINT')
+            op = col.operator(operator = 'copycat.list', text = '', icon = 'GROUP_BONE')
+            op.operation = 'DEFAULT'
 
-        self.layout.operator(operator = 'copycat.export', icon = 'EXPORT')
+            if action.copycatMappings:
+                self.layout.operator(operator = 'copycat.apply', text = 'Apply Bone Constraints', icon = 'CONSTRAINT')
+
+            self.layout.operator(operator = 'copycat.export', icon = 'EXPORT')
 
 classes = [
     COPYCAT_BoneMapping,
     COPYCAT_BonesList,
+    COPYCAT_ImportOperator,
     COPYCAT_ListOperator,
     COPYCAT_ApplyOperator,
     COPYCAT_ExportOperator,
