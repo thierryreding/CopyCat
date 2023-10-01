@@ -58,10 +58,11 @@ class COPYCAT_ImportOperator(bpy.types.Operator, bpy_extras.io_utils.ImportHelpe
         return { 'FINISHED' }
 
 MAP_bones = (
-    ('ik_foot_l', 'foot_l'),
-    ('ik_foot_r', 'foot_r'),
-    ('ik_hand_l', 'hand_l'),
-    ('ik_hand_r', 'hand_r')
+    ('ik_foot_l',   'foot_l'),
+    ('ik_foot_r',   'foot_r'),
+    ('ik_hand_l',   'hand_l'),
+    ('ik_hand_r',   'hand_r'),
+    ('ik_hand_gun', 'hand_r'),
 )
 
 ENUM_ListOperation = [
